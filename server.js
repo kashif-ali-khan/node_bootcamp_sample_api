@@ -10,11 +10,21 @@ dotenv.config({ path: "./config/config.env" });
 
 const bootcamps = require('./routes/bootcamps');
 const app = express();
+
+// Body Parser
+app.use(express.json())
+
+//Connect to DB
 connectDB();
+
+
 if(process.env.NODE_ENV === 'development'){
     app.use(morgan('dev'));
 
 }
+
+
+
 app.use('/api/v1/bootcamps', bootcamps);
 
 
