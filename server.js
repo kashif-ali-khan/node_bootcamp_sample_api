@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const logger = require('./middleware/logger');
 const connectDB = require('./config/db');
 const morgan = require('morgan');
+const errorHandler = require('./middleware/errors');
 
 
 dotenv.config({ path: "./config/config.env" });
@@ -26,7 +27,7 @@ if(process.env.NODE_ENV === 'development'){
 
 
 app.use('/api/v1/bootcamps', bootcamps);
-
+app.use(errorHandler);
 
 
 
