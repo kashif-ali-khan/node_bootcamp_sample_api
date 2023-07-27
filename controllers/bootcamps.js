@@ -41,7 +41,7 @@ exports.getAllBootcamps = asyncHandler(async (req, res, next) => {
   // Pagination
 
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit,10) || 1;
+  const limit = parseInt(req.query.limit,10) || 100;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -51,7 +51,10 @@ exports.getAllBootcamps = asyncHandler(async (req, res, next) => {
   const total = await Bootcamp.countDocuments();
 
   // Executing query
-  const bootcamps = await query;
+  const bootcamps = await query.populate({
+    path:'courses',
+    select: 'title'
+  });
 
   const pagination = {};
 
@@ -174,11 +177,12 @@ exports.deleteBootcampsById = async (req, res, next) => {
   };
 
   try {
-    const bootcamp = await Bootcamp.findByIdAndRemove(req.params.id);
+    const bootcamp = await Bootcamp.findById(req.params.id);
 
     if (bootcamp) {
       returnObj.status = 200;
       returnObj.success = true;
+      bootcamp.deleteOne();
     }
     return res.json(returnObj.status, {
       success: returnObj.success,
