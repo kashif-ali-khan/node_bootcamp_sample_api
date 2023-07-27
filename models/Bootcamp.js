@@ -116,8 +116,8 @@ BootcampSchema.pre("save", function (next) {
 });
 
 // Cascading delete functionality
-BootcampSchema.pre("deleteOne", async function (next) {
-  console.log(`Courses delete with Bootcamp ID ${this._id}`.green.inverse);
+BootcampSchema.pre("deleteOne",{document:true, query: false}, async function (next) {
+  console.log(`Courses delete with Bootcamp ID ${this._id}`);
   this.model("Course").deleteMany({ bootcamp: this._id });
   next();
 });
