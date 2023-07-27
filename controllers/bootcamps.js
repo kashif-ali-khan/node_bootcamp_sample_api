@@ -1,6 +1,8 @@
 const Bootcamp = require("./../models/Bootcamp");
 const asyncHandler = require("./../middleware/async");
+const path = require("path");
 
+const ErrorResponse = require("./../utils/errorResponse");
 // @desc     Get All Bootcamps
 // @route    /api/v1/bootcamps
 // @access   public
@@ -41,7 +43,7 @@ exports.getAllBootcamps = asyncHandler(async (req, res, next) => {
   // Pagination
 
   const page = parseInt(req.query.page, 10) || 1;
-  const limit = parseInt(req.query.limit,10) || 100;
+  const limit = parseInt(req.query.limit, 10) || 100;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
@@ -52,8 +54,8 @@ exports.getAllBootcamps = asyncHandler(async (req, res, next) => {
 
   // Executing query
   const bootcamps = await query.populate({
-    path:'courses',
-    select: 'title'
+    path: "courses",
+    select: "title",
   });
 
   const pagination = {};
@@ -67,7 +69,7 @@ exports.getAllBootcamps = asyncHandler(async (req, res, next) => {
 
   if (startIndex > 0) {
     pagination.prev = {
-      page: page-1,
+      page: page - 1,
       limit,
     };
   }
@@ -192,3 +194,39 @@ exports.deleteBootcampsById = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc     Upload Photo
+// @route    /api/v1/bootcamp/:id/photo
+
+// @access   public
+
+exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
+  const bootcamp = await Bootcamp.findById(req.params.id);
+  if (!bootcamp) {
+    return next(
+      new ErrorResponse(`Bootcamp Not found with id ${req.params.id}`, 404)
+    );
+  }
+  if (!req.files) {
+    return next(new ErrorResponse(`Please upload files`, 400));
+  }
+
+  const file = req.files.file;
+
+   file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+  console.log(file.name);
+
+  file.mv(`${process.env.UPLOAD_PATH}/${file.name}`, async (err) => {
+    if (err) {
+      console.error(err);
+      return next(new ErrorResponse("File not uploaded", 500));
+    }
+    await Bootcamp.findByIdAndUpdate(req.params.id, {
+      photo: file.name,
+    });
+  });
+  res.status(200).json({
+    success: true,
+    data: file.name,
+  });
+});
