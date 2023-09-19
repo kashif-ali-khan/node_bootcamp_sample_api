@@ -10,6 +10,8 @@ const {
   uploadBootcampPhoto,
 } = require("../controllers/bootcamps");
 
+const { protect } = require('./../middleware/auth'); 
+
 const course = require("./courses");
 
 const Bootcamps = require("./../models/Bootcamp");
@@ -21,7 +23,7 @@ router.use("/:bootcampId/courses", course);
 router
   .route("/")
   .get(advancedResults(Bootcamps, "courses"), getAllBootcamps)
-  .post(createBootcamp);
+  .post(protect, createBootcamp);
 router
   .route("/:id")
   .get(getBootcampsById)

@@ -6,6 +6,9 @@ const morgan = require("morgan");
 const errorHandler = require("./middleware/errors");
 const fileupload = require("express-fileupload");
 const path = require("path");
+const cookieParser = require("cookie-parser");
+
+
 
 dotenv.config({ path: "./config/config.env" });
 // Route files
@@ -19,6 +22,9 @@ const app = express();
 
 // Body Parser
 app.use(express.json());
+
+//cookie parser
+app.use(cookieParser())
 
 //File uploading
 app.use(fileupload());

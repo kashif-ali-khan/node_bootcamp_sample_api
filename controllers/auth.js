@@ -23,7 +23,6 @@ exports.register = asyncHandler(async (req, res, next) => {
   });
 });
 
-
 // @desc     Login User
 // @route    /api/v1/auth/login/
 
@@ -31,30 +30,35 @@ exports.register = asyncHandler(async (req, res, next) => {
 exports.login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
-  if(!email || !password){
-    return next(new ErrorResponse('Please provide email and password User', 400))
+  if (!email || !password) {
+    return next(
+      new ErrorResponse("Please provide email and password User", 400)
+    );
   }
 
-  const user = await User.findOne({email}).select("+password");
+  const user = await User.findOne({ email }).select("+password");
 
-  if(!user){
-    return next(new ErrorResponse('Invalid User', 401))
+  if (!user) {
+    return next(new ErrorResponse("Invalid User", 401));
   }
 
   const isMatched = await user.comparePassword(password);
 
-  if(!isMatched){
-    return next(new ErrorResponse('Invalid Credentials', 401))
-
+  if (!isMatched) {
+    return next(new ErrorResponse("Invalid Credentials", 401));
   }
-  const token =  user.getSignedJWTToken();
+  sendJsonTokenResponse(user, 200, res);
+});
 
-  res.status(200).json({
+const sendJsonTokenResponse = (user, statusCode, res) => {
+  const token = user.getSignedJWTToken();
+  const options = {
+    expires: new Date(Date.now() +  30 * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+  };
+
+  return res.status(statusCode).cookie("token", token, options).json({
     success: true,
     token,
   });
-});
-
-
-
-
+};
