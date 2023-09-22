@@ -50,10 +50,18 @@ exports.login = asyncHandler(async (req, res, next) => {
   sendJsonTokenResponse(user, 200, res);
 });
 
+exports.getLoggedInUser = asyncHandler(async (req, res, next) => {
+  //const userInfo = await User.findById(req.user.id)
+  return res.status(200).json({
+    success: true,
+    user: req.user
+  });
+});
+
 const sendJsonTokenResponse = (user, statusCode, res) => {
   const token = user.getSignedJWTToken();
   const options = {
-    expires: new Date(Date.now() +  30 * 24 * 60 * 60 * 1000),
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     httpOnly: true,
   };
 

@@ -61,20 +61,33 @@ exports.getBootcampsById = async (req, res, next) => {
 // @route    /api/v1/bootcamps
 // @access   public
 
-exports.createBootcamp = async (req, res, next) => {
-  console.log(req.body);
+// @desc      Create new bootcamp
+// @route     POST /api/v1/bootcamps
+// @access    Private
+exports.createBootcamp = asyncHandler(async (req, res, next) => {
+  // Add user to req,body
+  req.body.user = req.user.id;
 
-  try {
-    const bc = await Bootcamp.create(req.body);
-    res.status(201).json({
-      success: true,
-      message: `Create Bootcamp`,
-      data: bc,
-    });
-  } catch (err) {
-    next(error);
+  // Check for published bootcamp
+  const publishedBootcamp = await Bootcamp.findOne({ user: req.user.id });
+
+  // If the user is not an admin, they can only add one bootcamp
+  if (publishedBootcamp && req.user.role !== "admin") {
+    return next(
+      new ErrorResponse(
+        `The user with ID ${req.user.id} has already published a bootcamp`,
+        400
+      )
+    );
   }
-};
+
+  const bootcamp = await Bootcamp.create(req.body);
+
+  res.status(201).json({
+    success: true,
+    data: bootcamp,
+  });
+});
 
 // @desc     Update  Bootcamp By Id
 // @route    /api/v1/bootcamps/:id
@@ -87,18 +100,29 @@ exports.updateBootcampsById = async (req, res, next) => {
   };
 
   try {
-    const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+    let bootcamp = await Bootcamp.findById(req.params.id);
+
+    if (!bootcamp) {
+      return next(new ErrorResponse(`Bootcamp detail not found`, 404));
+    }
+
+    if (req.user.id !== bootcamp.user.toString() && req.user.role !== "admin") {
+      return next(
+        new ErrorResponse(
+          `User ${req.user.name} not authorised to update this Bootcamp`,
+          404
+        )
+      );
+    }
+
+    bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
 
-    if (bootcamp) {
-      returnObj.status = 200;
-      returnObj.success = true;
-    }
-    return res.json(returnObj.status, {
-      success: returnObj.success,
-      data: bootcamp,
+    res.status(200).json({
+      success: true,
+      bootcamp: bootcamp,
     });
   } catch (error) {
     next(error);
@@ -150,7 +174,7 @@ exports.uploadBootcampPhoto = asyncHandler(async (req, res, next) => {
 
   const file = req.files.file;
 
-   file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+  file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
   console.log(file.name);
 
   file.mv(`${process.env.UPLOAD_PATH}/${file.name}`, async (err) => {
